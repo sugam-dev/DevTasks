@@ -1,0 +1,172 @@
+﻿@model State
+@{
+    ViewData["Title"] = "State Page";
+    Layout = "_Layout";
+}
+<div class="pagetitle">
+    <h1>State</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item active">State</li>
+        </ol>
+    </nav>
+</div>
+
+<section class="section">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">&nbsp;</h5>
+            <button id="addStateBtn" class="btn btn-primary"><i class="bi bi-plus-circle"></i></button>
+            <hr />
+            <table class="table table-bordered border-primary" id="stateTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- State Table -->
+<!-- Add/Edit State Modal -->
+<div class="modal" id="stateModal" tabindex="-1" aria-labelledby="stateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stateModalLabel">Add/Edit State</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="stateForm">
+                    <input type="hidden" id="stateId" />
+                    <div class="form-group">
+                        <label for="stateName">State Name</label>
+                        <input type="text" id="stateName" class="form-control" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            loadStates();
+
+            // Load states into the table
+            function loadStates() {
+                $.ajax({
+                    url: '/api/state',
+                    type: 'GET',
+                    success: function (data) {
+                        var rows = '';
+                        $.each(data, function (i, state) {
+                            rows += '<tr>';
+                            rows += '<td>' + state.id + '</td>';
+                            rows += '<td>' + state.name + '</td>';
+                            rows += '<td>';
+                            rows += '<button class="btn btn-warning btn-sm edit-btn" data-id="' + state.id + '"><i class="bi bi-pen"></i></button> ';
+                            rows += '<button class="btn btn-danger btn-sm delete-btn" data-id="' + state.id + '"><i class="bi bi-trash"></i></button>';
+                            rows += '</td>';
+                            rows += '</tr>';
+                        });
+                        $('#stateTable tbody').html(rows);
+                    },
+                    error: function () {
+                        alert('Error loading states');
+                    }
+                });
+            }
+
+            // Show Add Modal
+            $('#addStateBtn').click(function () {
+                $('#stateId').val('');
+                $('#stateName').val('');
+                $('#stateModalLabel').text('Add State');
+                $('#stateModal').modal('show');
+            });
+
+            // Show Edit Modal
+            $(document).on('click', '.edit-btn', function () {
+                var id = $(this).data('id');
+                $.ajax({
+                    url: '/api/state/' + id,
+                    type: 'GET',
+                    success: function (data) {
+                        $('#stateId').val(data.id);
+                        $('#stateName').val(data.name);
+                        $('#stateModalLabel').text('Edit State');
+                        $('#stateModal').modal('show');
+                    },
+                    error: function () {
+                        alert('Error fetching state data');
+                    }
+                });
+            });
+
+            // Add/Edit State
+            $('#stateForm').submit(function (e) {
+                e.preventDefault();
+                var stateId = $('#stateId').val();
+                var stateName = $('#stateName').val();
+                var url = stateId ? '/api/state/' + stateId : '/api/state';
+                var type = stateId ? 'PUT' : 'POST';
+
+                // Construct payload without 'id' for POST and with 'id' for PUT
+                var payload = stateId ? { id: stateId, name: stateName } : { name: stateName };
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        $('#stateModal').modal('hide');
+                        loadStates();
+                    },
+                    error: function (jqXHR) {
+                        var errorMessage = 'Error saving state';
+                        if (jqXHR.responseJSON && jqXHR.responseJSON.title) {
+                            errorMessage = jqXHR.responseJSON.title;
+                        } else if (jqXHR.responseText) {
+                            errorMessage = jqXHR.responseText;
+                        }
+                        alert(errorMessage);
+                    }
+                });
+            });
+
+
+            // Delete State
+            $(document).on('click', '.delete-btn', function () {
+                var id = $(this).data('id');
+                if (confirm('Are you sure you want to delete this state?')) {
+                    $.ajax({
+                        url: '/api/state/' + id,
+                        type: 'DELETE',
+                        success: function () {
+                            loadStates();
+                        },
+                        error: function () {
+                            alert('Error deleting state');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

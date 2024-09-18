@@ -1,0 +1,177 @@
+﻿@model District
+@{
+    ViewData["Title"] = "District Page";
+    Layout = "_Layout";
+}
+<div class="pagetitle">
+    <h1>District</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item active">District</li>
+        </ol>
+    </nav>
+</div>
+
+<section class="section">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">&nbsp;</h5>
+            <button id="addDistrictBtn" class="btn btn-primary"><i class="bi bi-plus-circle"></i></button>
+            <hr />
+            <table class="table table-bordered border-primary" id="districtTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>State</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- District Modal -->
+<div class="modal" id="districtModal" tabindex="-1" aria-labelledby="districtModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="districtModalLabel">Add/Edit District</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="districtForm">
+                    <input type="hidden" id="districtId" />
+                    <div class="form-group">
+                        <label for="districtName">District Name</label>
+                        <input type="text" id="districtName" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="stateId">State</label>
+                        <select id="stateId" class="form-select" required>
+                            <!-- Populate with states -->
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            loadDistricts();
+            loadStates();
+
+            $('#addDistrictBtn').click(function () {
+                $('#districtId').val('');
+                $('#districtName').val('');
+                $('#stateId').val('');
+                $('#districtModal').modal('show');
+            });
+
+            $('#districtForm').submit(function (e) {
+                e.preventDefault();
+                var districtId = $('#districtId').val();
+                var districtName = $('#districtName').val();
+                var stateId = $('#stateId').val();
+                var url = districtId ? '/api/district/' + districtId : '/api/district';
+                var type = districtId ? 'PUT' : 'POST';
+
+                // Construct payload without 'id' for POST and with 'id' for PUT
+                var payload = districtId ? { id: districtId, name: districtName, stateId: stateId } : { name: districtName, stateId: stateId };
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        $('#districtModal').modal('hide');
+                        loadDistricts();
+                    },
+                    error: function () {
+                        alert('Error saving district');
+                    }
+                });
+            });
+        });
+
+        function loadDistricts() {
+            $.ajax({
+                url: '/api/district',
+                type: 'GET',
+                success: function (data) {
+                    var tbody = $('#districtTable tbody');
+                    tbody.empty();
+                    var rows = '';
+                    $.each(data, function (index, district) {
+                        rows += '<tr>';
+                        rows += '<td>' + district.id + '</td>';
+                        rows += '<td>' + district.name + '</td>';
+                        rows += '<td>' + district.stateName + '</td>';
+                        rows += '<td>';
+                        rows += '<button class="btn btn-warning btn-sm edit-btn" data-id="' + district.id + '"><i class="bi bi-pen"></i></button> ';
+                        rows += '<button class="btn btn-danger btn-sm delete-btn" data-id="' + district.id + '"><i class="bi bi-trash"></i></button>';
+                        rows += '</td>';
+                        rows += '</tr>';
+                    });
+                    $('#districtTable tbody').html(rows);
+                }
+            });
+        }
+
+        function loadStates() {
+            $.ajax({
+                url: '/api/state',
+                type: 'GET',
+                success: function (data) {
+                    var select = $('#stateId');
+                    select.empty();
+                    $.each(data, function (index, state) {
+                        select.append('<option value="' + state.id + '">' + state.name + '</option>');
+                    });
+                }
+            });
+        }
+
+        function editDistrict(id) {
+            $.ajax({
+                url: '/api/district/' + id,
+                type: 'GET',
+                success: function (data) {
+                    $('#districtId').val(data.id);
+                    $('#districtName').val(data.name);
+                    $('#stateId').val(data.stateId);
+                    $('#districtModal').modal('show');
+                }
+            });
+        }
+
+        function deleteDistrict(id) {
+            if (confirm('Are you sure you want to delete this district?')) {
+                $.ajax({
+                    url: '/api/district/' + id,
+                    type: 'DELETE',
+                    success: function () {
+                        loadDistricts();
+                    },
+                    error: function () {
+                        alert('Error deleting district');
+                    }
+                });
+            }
+        }
+    </script>
+}

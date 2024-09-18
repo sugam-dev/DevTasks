@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace DevTasks.Models
 {
     [Table("Customers")]
-    public class CustomerViewModel
+    public class Customer
     {
         public int Id { get; set; }
 
@@ -16,12 +16,12 @@ namespace DevTasks.Models
         [Range(1, byte.MaxValue, ErrorMessage = "GenderId must be a number.")]
         public byte GenderId { get; set; }
 
-        [Required]
-        [Range(1, short.MaxValue, ErrorMessage = "StateId must be a number.")]
-        public short StateId { get; set; }
+        // Foreign key properties
+        public int StateId { get; set; }
+        public int DistrictId { get; set; }
 
-        [Required]
-        [Range(1, short.MaxValue, ErrorMessage = "DistrictId must be a number.")]
-        public short DistrictId { get; set; }
+        // Navigation properties
+        public State State { get; set; }
+        public District District { get; set; }
     }
 }

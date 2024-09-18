@@ -1,0 +1,256 @@
+﻿@model Customer
+@{
+    ViewData["Title"] = "Customer Page";
+    Layout = "_Layout";
+}
+<div class="pagetitle">
+    <h1>Customer</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item active">Customer</li>
+        </ol>
+    </nav>
+</div>
+
+<section class="section">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">&nbsp;</h5>
+            <button id="addCustomerBtn" class="btn btn-primary"><i class="bi bi-plus-circle"></i></button>
+            <hr />
+            <table class="table table-bordered border-primary" id="customerTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>State</th>
+                        <th>District</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Customer Modal -->
+<div class="modal" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customerModalLabel">Add/Edit Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm">
+                    <input type="hidden" id="customerId" />
+                    <div class="form-group">
+                        <label for="customerName">Customer Name</label>
+                        <input type="text" id="customerName" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="genderId">Gender</label>
+                        <select id="genderId" class="form-control" required>
+                            <!-- Options will be populated by jQuery -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="stateId">State</label>
+                        <select id="stateId" class="form-control" required>
+                            <!-- Options will be populated by jQuery -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="districtId">District</label>
+                        <select id="districtId" class="form-control" required>
+                            <!-- Options will be populated by jQuery -->
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Define sample data
+            var genders = [
+                { id: 1, name: 'Male' },
+                { id: 2, name: 'Female' },
+                { id: 3, name: 'Non-Binary' },
+                { id: 4, name: 'Other' }
+            ];
+
+            // Function to load data into dropdowns
+            function loadDropdowns() {
+                // Load genders
+                var genderSelect = $('#genderId');
+                genderSelect.empty();
+                genderSelect.append('<option value="" disabled selected>Select Gender</option>');
+                $.each(genders, function (index, gender) {
+                    genderSelect.append(`<option value="${gender.id}">${gender.name}</option>`);
+                });
+
+                // Load states
+                $.ajax({
+                    url: '/api/state',
+                    type: 'GET',
+                    success: function (states) {
+                        var stateSelect = $('#stateId');
+                        stateSelect.empty();
+                        stateSelect.append('<option value="" disabled selected>Select State</option>');
+                        $.each(states, function (index, state) {
+                            stateSelect.append(`<option value="${state.id}">${state.name}</option>`);
+                        });
+                    },
+                    error: function (xhr) {
+                        alert('Error loading states: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            // Load districts based on selected state
+            $('#stateId').change(function () {
+                var stateId = $(this).val();
+                if (stateId) {
+                    $.ajax({
+                        url: '/api/district?stateId=' + stateId,
+                        type: 'GET',
+                        success: function (districts) {
+                            var districtSelect = $('#districtId');
+                            districtSelect.empty();
+                            districtSelect.append('<option value="" disabled selected>Select District</option>');
+                            $.each(districts, function (index, district) {
+                                districtSelect.append(`<option value="${district.id}">${district.name}</option>`);
+                            });
+                        },
+                        error: function (xhr) {
+                            alert('Error loading districts: ' + xhr.responseText);
+                        }
+                    });
+                } else {
+                    $('#districtId').empty().append('<option value="" disabled selected>Select District</option>');
+                }
+            });
+
+            // Load customers into table
+            function loadCustomers() {
+                $.ajax({
+                    url: '/api/customer',
+                    type: 'GET',
+                    success: function (customers) {
+                        var customerTableBody = $('#customerTable tbody');
+                        customerTableBody.empty();
+                        $.each(customers, function (index, customer) {
+                            customerTableBody.append(`
+                                            <tr>
+                                                <td>${customer.id}</td>
+                                                <td>${customer.name}</td>
+                                                <td>${genders.find(g => g.id === customer.genderId).name}</td>
+                                                        <td>${customer.stateName}</td>
+                                                        <td>${customer.districtName}</td>
+                                                <td>
+                                                            <button class="btn btn-warning btn-sm edit-btn" data-id="${customer.id}"><i class="bi bi-pen"></i></button>
+                                                            <button class="btn btn-danger btn-sm delete-btn" data-id="${customer.id}"><i class="bi bi-trash"></i></button>
+                                                </td>
+                                            </tr>
+                                        `);
+                        });
+                    },
+                    error: function (xhr) {
+                        alert('Error loading customers: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            // Show modal for adding a customer
+            $('#addCustomerBtn').click(function () {
+                $('#customerId').val('');
+                $('#customerForm')[0].reset();
+                $('#customerModal').modal('show');
+            });
+
+            // Handle form submission for adding/editing a customer
+            $('#customerForm').submit(function (e) {
+                e.preventDefault();
+                var customerId = $('#customerId').val();
+                var customerName = $('#customerName').val();
+                var genderId = $('#genderId').val();
+                var stateId = $('#stateId').val();
+                var districtId = $('#districtId').val();
+                var url = customerId ? '/api/customer/' + customerId : '/api/customer';
+                var type = customerId ? 'PUT' : 'POST';
+
+                // Construct payload without 'id' for POST and with 'id' for PUT
+                var payload = customerId ? { id: customerId, name: customerName, genderId: genderId, stateId: stateId, districtId: districtId } : { name: customerName, genderId: genderId, stateId: stateId, districtId: districtId };
+
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function () {
+                        $('#customerModal').modal('hide');
+                        loadCustomers();
+                    },
+                    error: function (xhr) {
+                        alert('Error saving customer: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            // Handle editing a customer
+            $('#customerTable').on('click', '.edit-btn', function () {
+                var customerId = $(this).data('id');
+                $.ajax({
+                    url: '/api/customer/' + customerId,
+                    type: 'GET',
+                    success: function (customer) {
+                        $('#customerId').val(customer.id);
+                        $('#customerName').val(customer.name);
+                        $('#genderId').val(customer.genderId);
+                        $('#stateId').val(customer.stateId).change(); // Trigger stateId change to load districts
+                        $('#districtId').val(customer.districtId);
+                        $('#customerModal').modal('show');
+                    },
+                    error: function (xhr) {
+                        alert('Error loading customer details: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            // Handle deleting a customer
+            $('#customerTable').on('click', '.delete-btn', function () {
+                var customerId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this customer?')) {
+                    $.ajax({
+                        url: '/api/customer/' + customerId,
+                        type: 'DELETE',
+                        success: function () {
+                            loadCustomers();
+                        },
+                        error: function (xhr) {
+                            alert('Error deleting customer: ' + xhr.responseText);
+                        }
+                    });
+                }
+            });
+
+            // Initial load of dropdowns and customers
+            loadDropdowns();
+            loadCustomers();
+        });
+    </script>
+}

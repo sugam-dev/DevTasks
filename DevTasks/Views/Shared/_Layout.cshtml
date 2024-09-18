@@ -9,7 +9,6 @@
 @if (!isAuthenticated)
 {
     <script type="text/javascript">
-        @* Redirect to the login page if the user is not authenticated *@
         window.location.href = "@redirectUrl";
     </script>
 }
@@ -97,6 +96,30 @@
             </li>
             <!-- End Dashboard Nav -->
 
+            <li class="nav-item">
+                <a class="nav-link collapsed" asp-controller="State" asp-action="Index">
+                    <i class="bi bi-map"></i>
+                    <span>State</span>
+                </a>
+            </li>
+            <!-- End State Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" asp-controller="District" asp-action="Index">
+                    <i class="bi bi-pin-map"></i>
+                    <span>District</span>
+                </a>
+            </li>
+            <!-- End District Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" asp-controller="Customer" asp-action="Index">
+                    <i class="bi bi-person"></i>
+                    <span>Customer</span>
+                </a>
+            </li>
+            <!-- End Customer Nav -->
+
         </ul>
 
     </aside>
@@ -122,5 +145,6 @@
 
     <!-- Template Main JS File -->
     <script src="~/js/main.js"></script>
+
 </body>
 </html>

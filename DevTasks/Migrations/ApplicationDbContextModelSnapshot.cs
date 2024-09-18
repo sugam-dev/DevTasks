@@ -91,7 +91,7 @@ namespace DevTasks.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("DevTasks.Models.CustomerViewModel", b =>
+            modelBuilder.Entity("DevTasks.Models.Customer", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -99,8 +99,8 @@ namespace DevTasks.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<short>("DistrictId")
-                        .HasColumnType("smallint");
+                    b.Property<int>("DistrictId")
+                        .HasColumnType("int");
 
                     b.Property<byte>("GenderId")
                         .HasColumnType("tinyint");
@@ -109,12 +109,54 @@ namespace DevTasks.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<short>("StateId")
-                        .HasColumnType("smallint");
+                    b.Property<int>("StateId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DistrictId");
+
+                    b.HasIndex("StateId");
+
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("DevTasks.Models.District", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("StateId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StateId");
+
+                    b.ToTable("Districts");
+                });
+
+            modelBuilder.Entity("DevTasks.Models.State", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("States");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -254,6 +296,36 @@ namespace DevTasks.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("DevTasks.Models.Customer", b =>
+                {
+                    b.HasOne("DevTasks.Models.District", "District")
+                        .WithMany("Customers")
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DevTasks.Models.State", "State")
+                        .WithMany("Customers")
+                        .HasForeignKey("StateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("District");
+
+                    b.Navigation("State");
+                });
+
+            modelBuilder.Entity("DevTasks.Models.District", b =>
+                {
+                    b.HasOne("DevTasks.Models.State", "State")
+                        .WithMany("Districts")
+                        .HasForeignKey("StateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("State");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -303,6 +375,18 @@ namespace DevTasks.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("DevTasks.Models.District", b =>
+                {
+                    b.Navigation("Customers");
+                });
+
+            modelBuilder.Entity("DevTasks.Models.State", b =>
+                {
+                    b.Navigation("Customers");
+
+                    b.Navigation("Districts");
                 });
 #pragma warning restore 612, 618
         }
